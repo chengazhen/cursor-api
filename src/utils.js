@@ -2,6 +2,10 @@ const { v4: uuidv4 } = require('uuid');
 const zlib = require('zlib');
 const $root = require('./message.js');
 const crypto = require('crypto');
+const NodeCache = require('node-cache');
+
+// 创建缓存实例，默认缓存时间1小时
+const cache = new NodeCache({ stdTTL: 0 });
 
 const regex = /<\|BEGIN_SYSTEM\|>.*?<\|END_SYSTEM\|>.*?<\|BEGIN_USER\|>.*?<\|END_USER\|>/s;
 
@@ -88,6 +92,15 @@ function gunzip(chunk) {
 }
 
 function getRandomIDPro({ size, dictType, customDict }) {
+  // 生成缓存key
+  const cacheKey = `randomId:${size}:${dictType}:${customDict || ''}`;
+  
+  // 检查缓存
+  const cachedId = cache.get(cacheKey);
+  if (cachedId) {
+    return cachedId;
+  }
+
   let random = '';
   if (!customDict) {
     switch (dictType) {
@@ -102,7 +115,16 @@ function getRandomIDPro({ size, dictType, customDict }) {
     }
   }
   for (; size--; ) random += customDict[(Math.random() * customDict.length) | 0];
+  
+  // 将生成的ID存入缓存
+  cache.set(cacheKey, random);
+  
   return random;
+}
+
+// 可以添加一个清除缓存的方法
+function clearIdCache() {
+  cache.flushAll();
 }
 
 function generateHashed64Hex(input, salt = '') {
@@ -121,6 +143,13 @@ function obfuscateBytes(byteArray) {
 }
 
 function generateCursorChecksum(token) {
+  // 检查缓存
+  const cacheKey = `cursor:${token}`;
+  const cachedChecksum = cache.get(cacheKey);
+  if (cachedChecksum) {
+    return cachedChecksum;
+  }
+
   // 生成machineId和macMachineId
   const machineId = generateHashed64Hex(token, 'machineId');
   const macMachineId = generateHashed64Hex(token, 'macMachineId');
@@ -141,7 +170,17 @@ function generateCursorChecksum(token) {
   const encodedChecksum = Buffer.from(obfuscatedBytes).toString('base64');
 
   // 组合最终的checksum
-  return `${encodedChecksum}${machineId}/${macMachineId}`;
+  const checksum = `${encodedChecksum}${machineId}/${macMachineId}`;
+  
+  // 存入缓存
+  cache.set(cacheKey, checksum);
+  
+  return checksum;
+}
+
+// 添加清除缓存的方法
+function clearChecksumCache() {
+  cache.flushAll();
 }
 
 module.exports = {
@@ -149,4 +188,5 @@ module.exports = {
   chunkToUtf8String,
   getRandomIDPro,
   generateCursorChecksum,
+  clearChecksumCache,
 };
