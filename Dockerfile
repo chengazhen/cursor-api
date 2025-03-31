@@ -1,12 +1,20 @@
-FROM node:lts-alpine
+# 使用 Node.js 18 作为基础镜像
+FROM node:18-alpine
 
-EXPOSE 3000
-ENV TZ=Asia/Shanghai
-
+# 设置工作目录
 WORKDIR /app
+
+# 复制 package.json 和 package-lock.json（如果存在）
+COPY package*.json ./
+
+# 安装依赖
+RUN npm install
+
+# 复制源代码
 COPY . .
 
-RUN yarn config set registry https://registry.npmmirror.com/
-RUN yarn
+# 暴露端口
+EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+# 启动命令
+CMD ["node", "src/index.js"]

@@ -7,6 +7,13 @@ const app = express();
 // 中间件配置
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// 加个日志
+app.use((req, res, next) => {
+  // 请求和响应
+  console.log(`${req.method} ${req.url}`);
+  console.log(req.body);
+  next();
+});
 
 
 function generateChecksum(token) {
