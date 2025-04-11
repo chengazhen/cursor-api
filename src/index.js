@@ -67,7 +67,7 @@ app.post('/v1/chat/completions', async (req, res) => {
         'user-agent': 'connect-es/1.4.0',
         'x-amzn-trace-id': `Root=${uuidv4()}`,
         'x-cursor-checksum': checksum,
-        'x-cursor-client-version': '0.42.3',
+        'x-cursor-client-version': '0.48.8',
         'x-cursor-timezone': 'Asia/Shanghai',
         'x-ghost-mode': 'false',
         'x-request-id': uuidv4(),
